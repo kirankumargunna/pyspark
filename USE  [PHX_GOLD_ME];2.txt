@@ -1,0 +1,172 @@
+USE  [PHX_GOLD_ME];
+
+/**********Create Index****************************/
+
+
+IF NOT EXISTS
+
+(
+    SELECT *
+    FROM sys.indexes
+    WHERE name = 'IX_SCC_PA.Tbl_MemberAssessmentHistory_loaddatetime'
+          AND object_id = OBJECT_ID('SCC_PA.Tbl_MemberAssessmentHistory')
+)
+
+BEGIN
+
+    CREATE NONCLUSTERED INDEX IX_SCC_PA.Tbl_MemberAssessmentHistory_loaddatetime
+    ON SCC_PA.Tbl_MemberAssessmentHistory (LoadDateTime);
+
+END;
+/************************Create Schema*******************************/
+
+IF NOT EXISTS
+(
+    SELECT schema_name
+    FROM information_schema.schemata
+    WHERE schema_name = 'SCC_PA'
+)
+BEGIN
+    EXEC ('CREATE SCHEMA SCC_PA')
+END
+
+/************************Create Table*******************************/
+
+IF NOT EXISTS
+(
+    SELECT *
+    FROM INFORMATION_SCHEMA.tables
+    WHERE TABLE_NAME = 'Tbl_MemberAssessmentHistory'
+          and TABLE_SCHEMA = 'SCC_PA'
+)
+BEGIN
+
+CREATE TABLE SCC_PA.Tbl_MemberAssessmentHistory
+(
+	
+      
+    Client_Id int Not Null,
+        [MemberAssessmentHistoryID] [int]  NULL,
+	[MemberAssessmentID] [int]  NULL,
+	[MemberID] [int]  NULL,
+	[CampaignID] [int]  NULL,
+	[EncounterDate] [datetime]  NULL,
+	[CompleteDate] [datetime] NULL,
+	[CompleteDateLocal] [datetime] NULL,
+	[LastModifiedDate] [datetime]  NULL,
+	[IsStarted] [bit]  NULL,
+	[MemberCampaignAppointmentID] [int] NULL,
+	[PractitionerID] [int] NULL,
+	[PractitionerFirstName] [nvarchar](30) NULL,
+	[PractitionerMiddleName] [nvarchar](30)  NULL,
+	[PractitionerLastName] [nvarchar](75) NULL,
+	[NPI] [nvarchar](50) NULL,
+	[PractitionerLocationID] [int] NULL,
+	[PractitionerPhone] [nvarchar](25) NULL,
+	[PractitionerSpecialtyID] [int] NULL,
+	[SavedAssessmentXML] [xml] NULL,
+	[AssessmentTemplateID] [int] NULL,
+	[NotifyReqStatusSent] [bit] NULL,
+	[ActionReqStatusSent] [bit] NULL,
+	[NotifyReqStatusSentDate] [datetime] NULL,
+	[ActionReqStatusSentDate] [datetime] NULL,
+	[ActionReqFailedSentDate] [datetime] NULL,
+	[NotifyReqFailedSentDate] [datetime] NULL,
+	[NotifyReqPayLoad] [nvarchar](max) NULL,
+	[ActionReqPayLoad] [nvarchar](max) NULL,
+	[NotifiyReqStatusCode] [nvarchar](20) NULL,
+	[ActionReqStatusCode] [nvarchar](20) NULL,
+	[NotifyHTTPResponseFailure] [nvarchar](max) NULL,
+	[ActionHTTPResponseFailure] [nvarchar](max) NULL,
+	[Denormalized] [bit] NULL,
+	[OpenPractitionerID] [int] NULL,
+	[ClosePractitionerID] [int] NULL,
+	[SentToSRSA] [bit] NULL,
+	[SendToMRR] [bit] NULL,
+	[VendorReportDate] [datetime] NULL,
+	[CurrentPCPID] [int] NULL,
+	[AssessmentTypeID] [int] NULL,
+	[IsFaxSentToPRP] [bit] NULL,
+	[IsFaxable] [bit] NULL,
+	[ReasonCodeID] [int] NULL,
+	[IsAmendmentReportedToPseudoCodeRepository] [bit] NULL,
+	[VersionNo] [int]  NULL,
+	[FaxReason] [varchar](250) NULL,
+	[CreatedDate] [datetime] NULL,
+	[UpdatedDate] [datetime] NULL,
+	[CreatedUser] [nvarchar](50) NULL,
+	[UpdatedUser] [nvarchar](50) NULL,	
+        loaddatetime datetime not null Default getdate()
+	) on SCC_PA_PHX_GOLD_ME_FileGroup
+END
+
+ELSE
+
+BEGIN
+
+    PRINT 'SCC_PA.Tbl_MemberAssessmentHistory already exists';
+
+END
+
+/*********Create Filegroup***************************/
+
+
+/* Create a new filegroup for the  schema */
+IF NOT EXISTS (SELECT * FROM SYS.filegroups WHERE NAME='SCC_PA_PHX_GOLD_ME_FileGroup')
+BEGIN
+ALTER DATABASE PHX_GOLD_ME
+ADD FILEGROUP SCC_PA_PHX_GOLD_ME_FileGroup
+END
+ELSE
+BEGIN
+PRINT 'SCC_PA_PHX_GOLD_ME_FileGroup already exists'
+END
+
+/**********Create Foreign key***************************/
+
+/*1*/
+-- Check if the foreign key constraint exists
+IF EXISTS (
+    SELECT constraint_name
+    FROM information_schema.table_constraints
+    WHERE constraint_type = 'FOREIGN KEY'
+    AND table_name = 'Tbl_MemberAssessmentHistory'
+    AND constraint_name = 'FK_Tbl_ReportDeliveries_Tbl_DeliveryFrequency'
+) 
+BEGIN
+    -- Drop the existing foreign key constraint
+    ALTER TABLE SCC_PA.Tbl_MemberAssessmentHistory
+    DROP CONSTRAINT FK_Tbl_ReportDeliveries_Tbl_DeliveryFrequency;
+END
+
+
+-- Create the new foreign key constraint
+ALTER TABLE SCC_PA.Tbl_MemberAssessmentHistory WITH NOCHECK
+ADD CONSTRAINT FK_Tbl_ReportDeliveries_Tbl_DeliveryFrequency
+    FOREIGN KEY ([PractitionerID])
+    REFERENCES SCC_PA.[Practioner] (Practioner_id)
+;
+
+/************Create Primary key***************************************/
+
+------select * From INFORMATION_SCHEMA.COLUMNS order by table_name
+
+
+/* Check if the primary key constraint exists */
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'PK_Tbl_MemberAssessmentHistory' 
+    AND object_id = OBJECT_ID('SCC_PA.Tbl_MemberAssessmentHistory') 
+)
+BEGIN
+    -- Create the primary key constraint
+    ALTER TABLE SCC_PA.Tbl_MemberAssessmentHistory 
+    ADD CONSTRAINT PK_Tbl_MemberAssessmentHistory
+    PRIMARY KEY (Client_Id); 
+    PRINT 'Primary key constraint added successfully.';
+END
+ELSE
+BEGIN
+    PRINT 'Primary key constraint already exists.';
+END
