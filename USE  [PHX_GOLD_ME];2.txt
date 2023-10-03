@@ -170,3 +170,10 @@ ELSE
 BEGIN
     PRINT 'Primary key constraint already exists.';
 END
+
+/* Check if the primary key constraint exists */
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'PK_Tbl_MemberAssessmentHistory' 
+    AND object_id = OBJECT_ID('SCC_PA.Tbl_MemberAssessmentHistory') 
